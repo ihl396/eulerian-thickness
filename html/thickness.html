@@ -1,0 +1,268 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>thickness</title><meta name="generator" content="MATLAB 9.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-04-28"><meta name="DC.source" content="thickness.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="comment">% u must be a square matrix</span>
+<span class="comment">% Set region of interest to 0.5 and other region potential from 0 to 1</span>
+<span class="comment">% max_win is for quicker computation window (usually largest foci)</span>
+<span class="comment">% floor(n/2)-max_win+2:ceil(n/2)+max_win</span>
+
+<span class="keyword">function</span> [u, L0, L1] = thickness(u, max_iter)
+u_prev = u;
+input_u = u;
+n = length(u);
+<span class="comment">% field_e = [];</span>
+n_iter = 0;
+delta_t = .25;
+<span class="comment">% if max_win &lt;= 0</span>
+<span class="comment">%     max_win = n;</span>
+<span class="comment">% end</span>
+
+<span class="keyword">if</span> max_iter &lt;=0
+    max_iter = 5000;
+<span class="keyword">end</span>
+
+<span class="comment">% Compute laplace(U) = 0</span>
+
+<span class="keyword">while</span> n_iter &lt; max_iter
+    n_iter = n_iter+1;
+    <span class="keyword">for</span> i = 2:n-1
+        <span class="keyword">for</span> j = 2:n-1
+            <span class="keyword">if</span> input_u(i,j) == .5
+                u_prev(i,j) = u(i,j)+ delta_t*(u(i+1,j) + u(i-1,j) + u(i,j+1) +u(i,j-1) - 4*u(i,j));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+
+    u = u_prev;
+<span class="comment">%     grad_phi_x = (phi(2:end,:)-phi(1:end-1,:))./2;</span>
+<span class="comment">%     grad_phi_y = (phi(:,2:end)-phi(:,1:end-1))./2;</span>
+<span class="comment">%     field_e(n_iter) = sqrt(sum(sum(grad_phi_x.^2))+sum(sum(grad_phi_y.^2)));</span>
+<span class="comment">%     if n_iter == 1</span>
+<span class="comment">%         e_ratio = 1;</span>
+<span class="comment">%     else</span>
+<span class="comment">%         e_ratio = (field_e(n_iter-1)-field_e(n_iter))/2;</span>
+<span class="comment">%     end</span>
+<span class="comment">%     fprintf('%8.6f | %8.6f\n', e_ratio, field_e(n_iter))</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Compute Tangent</span>
+grad_phi_x = zeros(size(u));
+grad_phi_y = zeros(size(u));
+T_x = zeros(size(u));
+T_y = zeros(size(u));
+<span class="keyword">for</span> i = 2:n-1
+    <span class="keyword">for</span> j = 2:n-1
+        <span class="keyword">if</span> input_u(i,j) == .5
+            grad_phi_x(i,j) = .5*(u_prev(i+1,j)-u_prev(i-1,j));
+            grad_phi_y(i,j) = .5*(u_prev(i,j+1)-u_prev(i,j-1));
+            norm_u = sqrt(grad_phi_x(i,j).^2+grad_phi_y(i,j).^2);
+            T_x(i,j) = grad_phi_x(i,j)./norm_u;
+            T_y(i,j) = grad_phi_y(i,j)./norm_u;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+L0 = zeros(size(u));
+L1 = zeros(size(u));
+dL0 = L0;
+dL1 = L1;
+iter = 0;
+<span class="keyword">while</span> iter &lt; max_iter
+    iter = iter + 1;
+    <span class="keyword">for</span> i = 2:n-1
+        <span class="keyword">for</span> j = 2:n-1
+            <span class="keyword">if</span> input_u(i,j) == .5
+                <span class="comment">% upwind differencing</span>
+                <span class="keyword">if</span> -T_x(i,j) &lt; 0
+                    L0_x = L0(i-1,j);
+                    L1_x = L1(i+1,j);
+                <span class="keyword">else</span>
+                    L0_x = L0(i+1,j);
+                    L1_x = L1(i-1,j);
+                <span class="keyword">end</span>
+                <span class="keyword">if</span> -T_y(i,j) &lt; 0
+                    L0_y = L0(i,j-1);
+                    L1_y = L1(i,j+1);
+                <span class="keyword">else</span>
+                    L0_y = L0(i,j+1);
+                    L1_y = L1(i,j-1);
+                <span class="keyword">end</span>
+                dL0(i,j) = (1 + abs(T_x(i,j))*L0_x + abs(T_y(i,j))*L0_y)/(abs(T_x(i,j))+abs(T_y(i,j)));
+                dL1(i,j) = (1 + abs(T_x(i,j))*L1_x + abs(T_y(i,j))*L1_y)/(abs(T_x(i,j))+abs(T_y(i,j)));
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    L0 = dL0;
+    L1 = dL1;
+<span class="keyword">end</span>
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Not enough input arguments.
+
+Error in thickness (line 7)
+u_prev = u;
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2016b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+% u must be a square matrix
+% Set region of interest to 0.5 and other region potential from 0 to 1
+% max_win is for quicker computation window (usually largest foci)
+% floor(n/2)-max_win+2:ceil(n/2)+max_win
+
+function [u, L0, L1] = thickness(u, max_iter) 
+u_prev = u;
+input_u = u;
+n = length(u);
+% field_e = [];
+n_iter = 0;
+delta_t = .25;
+% if max_win <= 0
+%     max_win = n;
+% end
+
+if max_iter <=0
+    max_iter = 5000;
+end
+
+% Compute laplace(U) = 0
+
+while n_iter < max_iter
+    n_iter = n_iter+1;
+    for i = 2:n-1
+        for j = 2:n-1
+            if input_u(i,j) == .5
+                u_prev(i,j) = u(i,j)+ delta_t*(u(i+1,j) + u(i-1,j) + u(i,j+1) +u(i,j-1) - 4*u(i,j));
+            end
+        end
+    end
+
+    u = u_prev;
+%     grad_phi_x = (phi(2:end,:)-phi(1:end-1,:))./2;
+%     grad_phi_y = (phi(:,2:end)-phi(:,1:end-1))./2;
+%     field_e(n_iter) = sqrt(sum(sum(grad_phi_x.^2))+sum(sum(grad_phi_y.^2)));
+%     if n_iter == 1
+%         e_ratio = 1;
+%     else
+%         e_ratio = (field_e(n_iter-1)-field_e(n_iter))/2;
+%     end
+%     fprintf('%8.6f | %8.6f\n', e_ratio, field_e(n_iter))
+end
+
+% Compute Tangent
+grad_phi_x = zeros(size(u));
+grad_phi_y = zeros(size(u));
+T_x = zeros(size(u));
+T_y = zeros(size(u));
+for i = 2:n-1
+    for j = 2:n-1
+        if input_u(i,j) == .5
+            grad_phi_x(i,j) = .5*(u_prev(i+1,j)-u_prev(i-1,j));
+            grad_phi_y(i,j) = .5*(u_prev(i,j+1)-u_prev(i,j-1));
+            norm_u = sqrt(grad_phi_x(i,j).^2+grad_phi_y(i,j).^2);
+            T_x(i,j) = grad_phi_x(i,j)./norm_u;
+            T_y(i,j) = grad_phi_y(i,j)./norm_u;
+        end
+    end
+end
+
+L0 = zeros(size(u));
+L1 = zeros(size(u));
+dL0 = L0;
+dL1 = L1;
+iter = 0;
+while iter < max_iter
+    iter = iter + 1;
+    for i = 2:n-1
+        for j = 2:n-1
+            if input_u(i,j) == .5
+                % upwind differencing
+                if -T_x(i,j) < 0
+                    L0_x = L0(i-1,j);
+                    L1_x = L1(i+1,j);
+                else
+                    L0_x = L0(i+1,j);
+                    L1_x = L1(i-1,j);
+                end
+                if -T_y(i,j) < 0
+                    L0_y = L0(i,j-1);
+                    L1_y = L1(i,j+1);
+                else
+                    L0_y = L0(i,j+1);
+                    L1_y = L1(i,j-1);
+                end
+                dL0(i,j) = (1 + abs(T_x(i,j))*L0_x + abs(T_y(i,j))*L0_y)/(abs(T_x(i,j))+abs(T_y(i,j)));
+                dL1(i,j) = (1 + abs(T_x(i,j))*L1_x + abs(T_y(i,j))*L1_y)/(abs(T_x(i,j))+abs(T_y(i,j)));
+            end
+        end
+    end
+    L0 = dL0;
+    L1 = dL1;
+end
+
+end
+##### SOURCE END #####
+--></body></html>
